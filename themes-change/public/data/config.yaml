@@ -1,6 +1,6 @@
 ---
-gameTitle: Narrat Game Example
-saveFileName: Narrat Empty
+gameTitle: Narrat Theme Swapping demo
+saveFileName: Narrat Theme Swapping
 images: {}
 dialogPanel:
   textSpeed: 30
@@ -19,8 +19,8 @@ layout:
   mobileDialogHeightPercentage: 60
   verticalLayoutThreshold: 600
   portraits:
-    width: 100
-    height: 100
+    width: 150
+    height: 225
 screens: data/screens.yaml
 buttons: data/buttons.yaml
 skills: data/skills.yaml

@@ -3,9 +3,13 @@ config:
   imagesPath: img/characters/
 characters:
   game:
-    name: ''
+    name: ""
     color: white
   player:
     style:
       color: orange
     name: You
+  helper:
+    name: "Tutorial character"
+    sprites:
+      idle: helper_cat.webp

@@ -1,55 +1,85 @@
-# Narrat Template
+# Narrat Theme Swapping
 
-Template app for [Narrat](https://github.com/nialna/narrat).
+This example game shows how to create a theme swapping system in a narrat game, allowing different layouts and UI styles in different parts of the game.
 
-> ✨ Bootstrapped with Create Snowpack App (CSA).
+## How it works
 
-## Usage
+This system relies on the `ThemeSwappingPlugin`, which you can find in the `src/ThemeSwappingPlugin.ts` file. This plugin uses themes that can do two things:
 
-You can clone, fork or download this to get it in a local folder, then:
+- Add a new `css` stylesheet to the page (allowing you to dynamically load/unload custom styles for each theme)
+- Add an extended `config` to narrat. The extended config is an object following the narrat config format, where you can specify any config values. They then get deep merged with the existing config. **This allows themes to change anything in the config**
 
-1. `npm install`
-2. `npm start`
+## Adding this to an existing game
 
-## Building for the web
+The plugin is used this way:
 
-`npm run build`
+1. Copy the `ThemeSwappingPlugin` file to your game, in the same folder (`src/ThemeSwappingPlugin.ts`)
+2. In `public/css`, create a new css file for each theme you want to use. For example, `theme1.css` and `theme2.css`. Put whatever you want in those css files for each theme. See the files in `public/css` for examples.
+3. At the top of `src/index.ts`, add a line to import the `ThemeSwappingPlugin`:
 
-Builds the app for production to the `build/` folder.
-It correctly bundles Vue in production mode and optimizes the build for the best performance.
+```
+import { Theme, ThemeSwappingPlugin } from "./ThemeSwappingPlugin";
+```
 
-It should be easy to host the built result as a static website on a service like [Netlify](https://www.netlify.com)
+4. In `src/index.ts`, create theme objects to define each theme. For example:
 
-## Building as an app
+```ts
+// See the full theme in `src/index.ts` for a more complete example
+const themes: Theme[] = [
+  {
+    id: "theme-1",
+    cssPath: "/css/theme-1.css",
+    extendedConfig: {
+      dialogPanel: {
+        width: 500,
+        height: 230,
+        rightOffset: 50,
+        bottomOffset: 50,
+      },
+    },
+  },
+  {
+    id: "theme-2",
+    cssPath: "/css/theme-2.css",
+  },
+];
+```
 
-This template has [electron](https://www.electronjs.org) already setup to create a built app of your game.
+5. In `src/index.ts`, just before `startApp` is called near the end of the file, add a line registering your plugin, passing it the themes you've created
 
-To run it:
+```ts
+window.addEventListener("load", () => {
+  registerPlugin(
+    new ThemeSwappingPlugin({
+      themes,
+    })
+  );
+  startApp({
+    configPath: "data/config.yaml",
+    debug,
+    logging: false,
+    scripts,
+  });
+});
+```
 
-`npm run electron`
+6. In your `narrat` scripts, simply use the `change_theme` command to change theme:
 
-To build it (it will come out in the `out` folder):
+```narrat
+main:
+  talk helper idle "Hello world"
+  talk helper idle "This is the default theme. Let's change theme:"
+  jump change_theme_menu
 
-`npm run package`
-
-This should work on Windows, Mac and Linux
-
-## Narrat documentation
-
-[See docs](https://docs.narrat.dev)
-
-## Changing game code
-
-You can edit game code and config in the data folder (`data/example.narrat`).
-
-[See docs](https://docs.narrat.dev) for more usage info
-
-## Available Scripts
-
-### npm start
-
-Runs the app in the development mode.
-Open http://localhost:8080 to view it in the browser.
-
-The page will reload if you make edits.
-You will also see any lint errors in the console.
+change_theme_menu:
+  choice:
+    talk helper idle "Change theme"
+    "Theme 1":
+      change_theme theme-1
+    "Theme 2":
+      change_theme theme-2
+    "default theme":
+      change_theme default
+  talk helper idle "wow the theme has changed"
+  jump change_theme_menu
+```

@@ -1,3 +1,11 @@
 .dialog {
-  background-color: red;
+  background-color: rgba(0, 0, 255, 0.5);
+}
+
+.dialog-container {
+  padding-bottom: 0px !important;
+}
+
+.dialog-content {
+  text-align: center;
 }

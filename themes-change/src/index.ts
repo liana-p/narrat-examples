@@ -2,6 +2,7 @@ import "narrat/dist/style.css";
 import "./css/main.css";
 import { NarratPlugin, registerPlugin, startApp } from "narrat";
 import scripts from "./scripts";
+import { Theme, ThemeSwappingPlugin } from "./ThemeSwappingPlugin";
 // Enable this when releasing for steam
 const useSteam = false;
 
@@ -14,44 +15,69 @@ if (import.meta.env.VITE_BUILD && !import.meta.env.VITE_DEBUG) {
   debug = false;
 }
 
-class SteamPlugin extends NarratPlugin {
-  onNarratSetup() {
-    console.log(
-      "Loading steam plugin - Creating a game loop to force screen refresh"
-    );
-    const canvas = document.createElement("canvas");
-    canvas.id = "fake-refresh-steam";
-    canvas.width = 1;
-    canvas.height = 1;
-    const styler = canvas as any as HTMLDivElement;
-    styler.style.position = "fixed";
-    styler.style.top = "0px";
-    styler.style.bottom = "0px";
-    styler.style.pointerEvents = "none";
-    styler.style.zIndex = "30000";
-    document.body.appendChild(canvas);
-    fakeGameloopForSteam();
-  }
-}
-
-function fakeGameloopForSteam() {
-  const canvas = document.getElementById(
-    "fake-refresh-steam"
-  ) as HTMLCanvasElement;
-  const styler = canvas as any as HTMLDivElement;
-  styler.style.width = `100vw`;
-  styler.style.height = `100vh`;
-  const ctx = canvas.getContext("2d")!;
-  ctx.clearRect(0, 0, 1, 1);
-  ctx.fillStyle = "rgba(0, 0, 0, 0.01)";
-  ctx.fillRect(0, 0, 1, 1);
-  requestAnimationFrame(fakeGameloopForSteam);
-}
+const themes: Theme[] = [
+  {
+    id: "theme-1",
+    cssPath: "/css/theme-1.css",
+    extendedConfig: {
+      dialogPanel: {
+        width: 500,
+        height: 230,
+        rightOffset: 50,
+        bottomOffset: 50,
+      },
+      layout: {
+        backgrounds: {
+          width: 600,
+          height: 900,
+        },
+        portraits: {
+          width: 200,
+          height: 200,
+          offset: {
+            landscape: {
+              right: -500,
+              bottom: 0,
+            },
+            portrait: {
+              right: 10,
+              bottom: 0,
+            },
+          },
+        },
+      },
+    },
+  },
+  {
+    id: "theme-2",
+    cssPath: "/css/theme-2.css",
+    extendedConfig: {
+      dialogPanel: {
+        width: 900,
+        height: 720,
+        rightOffset: 150,
+        bottomOffset: 0,
+      },
+      layout: {
+        portraits: {
+          offset: {
+            landscape: {
+              right: -600,
+              bottom: -200,
+            },
+          },
+        },
+      },
+    },
+  },
+];
 
 window.addEventListener("load", () => {
-  if (useSteam) {
-    registerPlugin(new SteamPlugin());
-  }
+  registerPlugin(
+    new ThemeSwappingPlugin({
+      themes,
+    })
+  );
   startApp({
     configPath: "data/config.yaml",
     debug,

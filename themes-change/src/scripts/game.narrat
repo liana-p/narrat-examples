@@ -1,4 +1,16 @@
 main:
-  "Hello world"
-  set_screen game 0 slide-top 1000
-  "(This game is empty so nothing will happen past this point. Open game.narrat to start editing)"
+  talk helper idle "Hello world"
+  talk helper idle "This is the default theme. Let's change theme:"
+  jump change_theme_menu
+    
+change_theme_menu:
+  choice:
+    talk helper idle "Change theme"
+    "Theme 1":
+      change_theme theme-1
+    "Theme 2":
+      change_theme theme-2
+    "default theme":
+      change_theme default
+  talk helper idle "wow the theme has changed"
+  jump change_theme_menu
