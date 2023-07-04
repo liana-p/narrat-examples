@@ -1,0 +1,12 @@
+---
+categories:
+  - id: default
+    title: Items
+items:
+  vodka:
+    name: Vodka
+    description: A bottle of vodka. Boosts mood.
+    icon: img/items/vodka.webp
+    onUse:
+      action: jump
+      label: use_vodka

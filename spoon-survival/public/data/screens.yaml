@@ -1,0 +1,88 @@
+---
+default:
+  background: img/backgrounds/room.webp
+  buttons:
+    - id: sleepButton
+      enabled: true
+      text: Sleep (0)
+      position:
+        left: 1047
+        top: 338
+        width: 100
+        height: 50
+      action: sleepButton
+    - id: playButton
+      enabled: true
+      text: Play a game (1)
+      position:
+        left: 724
+        top: 112
+        width: 170
+        height: 50
+      action: playGame
+    - id: talkFriends
+      enabled: true
+      text: Chat with friends (1)
+      position:
+        left: 684
+        top: 50
+        width: 200
+        height: 50
+      action: chatFriends
+    - id: cookButton
+      enabled: true
+      text: Cook
+      position:
+        left: 20
+        top: 449
+        width: 100
+        height: 50
+      action: cook
+    - id: smartphone
+      enabled: true
+      text: Use Phone (0)
+      position:
+        left: 504
+        top: 457
+        width: 150
+        height: 50
+      action: useSmartphone
+    - id: workButton
+      enabled: true
+      text: Go to work (2)
+      position:
+        left: 128
+        top: 200
+        width: 200
+        height: 50
+      action: work
+    - id: walk
+      enabled: true
+      text: Go for a walk (1)
+      position:
+        left: 328
+        top: 280
+        width: 200
+        height: 50
+      action: walk
+    - id: gym
+      enabled: true
+      text: Go to the gym (2)
+      position:
+        left: 298
+        top: 100
+        width: 200
+        height: 50
+      action: gym
+    - id: showerButton
+      enabled: true
+      text: Shower (1)
+      position:
+        left: 800
+        top: 676
+        width: 100
+        height: 50
+      action: shower
+
+overlay:
+  background: img/backgrounds/overlay.webp

@@ -1,0 +1,492 @@
+constants:
+  set data.METERS_Y 550
+  set data.METERS_HEIGHT 169
+  set data.DEFAULT_X 443
+  set data.DEFAULT_Y 480
+  set data.PC_X 630
+  set data.PC_Y 380
+  set data.BED_X 1100
+  set data.BED_Y 380
+  set data.AWAY_X 2000
+  set data.AWAY_Y 2000
+  set data.NORMAL_SPOONS 6
+  set data.HARD_SPOONS 4
+  set data.EASY_SPOONS 8
+  set data.RENT_COST 300
+  set data.GROCERIES_COST 50
+  set data.GROCERIES_MEALS 2
+  set data.STARTING_METERS 70
+  set data.RICH_SALARY 500
+  set data.RICH_START_MONEY 500
+  set data.POOR_SALARY 320
+  set data.POOR_START_MONEY 320
+  set data.DAYS_TO_WIN 6
+
+first_setup:
+  set data.difficulty HARD
+  set data.wealth POOR
+  set data.playthroughs 0
+  set data.fridge_meals 2
+  set player.sprite (create_sprite img/sprites/player_neutral.webp $DEFAULT_X $DEFAULT_Y)
+  set data.metersSprite (create_sprite meters 0 503)
+  set data.metersSprite.anchor.x 0
+  set data.metersSprite.anchor.y 0
+  set data.moodSprite (create_sprite img/sprites/mood.webp 22 $METERS_Y)
+  set data.moodSprite.anchor.x 0
+  set data.moodSprite.anchor.y 0
+  set data.socialSprite (create_sprite img/sprites/social.webp 99 $METERS_Y)
+  set data.socialSprite.anchor.x 0
+  set data.socialSprite.anchor.y 0
+  set data.hungerSprite (create_sprite img/sprites/hunger.webp 180 $METERS_Y)
+  set data.hungerSprite.anchor.x 0
+  set data.hungerSprite.anchor.y 0
+  set data.hygieneSprite (create_sprite img/sprites/hygiene.webp 272 $METERS_Y)
+  set data.hygieneSprite.anchor.x 0
+  set data.hygieneSprite.anchor.y 0
+  set data.pcSprite (create_sprite img/sprites/empty_screen.webp 743 199)
+
+main:
+  run constants
+  run first_setup
+  set_screen overlay 1
+  run setup_vars
+  empty_layer 1
+  "In this game, you are trying to live your life and balance your mental health with your time and resources."
+  "Each day, you will be given a certain amount of spoons. Each action costs spoons, and if you run out of spoons before sleeping you will collapse from exhaustion."
+  "You can click on buttons to perform actions, or use items from your inventory."
+  clear_dialog
+  "You win after 6 days."
+  wait 1000
+  clear_dialog
+  "Let's start your life..."
+  clear_dialog
+  run start_game
+
+start_game:
+  "What will this life be called?"
+  set player.name (text_field "Enter a name")
+  run setup_vars
+  "%{player.name} has %{max_spoons} spoons per day."
+  "%{player.name} starts with %{starting_money} money and has a daily salary of %{salary} money."
+  jump start_day
+
+choose_action_prompt:
+  enable_interaction actions
+
+cant_act:
+  disable_interaction actions
+  "%{player.name} has run out of spoons and falls asleep on the ground, exhausted."
+  set exhausted true
+  add mood -50
+  add hygiene -60
+  jump end_day
+
+set_item name amount:
+  var current (item_amount? $name)
+  add_item $name (- $amount $current)
+
+setup_vars:
+  set hygiene $STARTING_METERS
+  set mood $STARTING_METERS
+  set hunger $STARTING_METERS
+  set social $STARTING_METERS
+  set alcoholDrank 0
+  set fridge_meals 2
+  set exhausted false
+  set_stat day 0
+  set time 0
+  set data.workedToday false
+  set data.fired false
+  run set_item vodka 1
+  set starting_money $POOR_START_MONEY
+  set_stat money $POOR_START_MONEY
+  if (== $data.difficulty HARD):
+    set max_spoons $data.HARD_SPOONS
+  if (== $data.difficulty EASY):
+    set max_spoons $data.EASY_SPOONS
+  if (== $data.difficulty NORMAL):
+    set max_spoons $data.NORMAL_SPOONS
+  if (== $data.wealth POOR):
+    set salary $POOR_SALARY
+    set starting_money $POOR_START_MONEY
+  if (== $data.wealth RICH):
+    set salary $RICH_SALARY
+    set starting_money $RICH_START_MONEY
+  set_stat money $starting_money
+  set_stat spoons $max_spoons
+  run update_mood
+
+calculate_meter_y value:
+  var percentage (/ $value 100)
+  var pos (+ $METERS_Y (* (- 1 $percentage) $METERS_HEIGHT))
+  return $pos
+
+end_day:
+  var day (get_stat_value day)
+  save_prompt "Day %{day}"
+  jump start_day
+
+start_day:
+  add_stat day 1
+  var day (get_stat_value day)
+  "It is day %{day}."
+  set data.workedToday false
+  set time 1
+  if (>= $alcoholToday 1):
+    "%{player.name} feels a bit hungover"
+    add mood -20
+    add hygiene -10
+    add hunger -10
+  set alcoholToday 0
+  set_stat spoons $max_spoons
+  if $exhausted:
+    "%{player.name} is exhausted from tiring themselves out too much yesterday."
+    "They'll have one less spoon today."
+    add_stat spoons -1
+    set exhausted false
+  run update_mood
+  "Rent money for the day has to be paid. Spent %{RENT_COST} money"
+  add_stat money (- 0 $RENT_COST)
+  if (<= (get_stat_value money) 0):
+    jump out_of_money
+  else:
+    jump before_action
+
+out_of_money:
+  "%{player.name} doesn't have enough money to pay their rent anymore."
+  jump game_over
+
+before_action:
+  if (run can_spend_spoon):
+    jump choose_action_prompt
+  else:
+    jump cant_act
+
+can_spend_spoon:
+  return (> (get_stat_value spoons) 0)
+
+spend_spoon amount:
+  var spoonsToSpend 1
+  if $amount:
+    set spoonsToSpend $amount
+  add_stat spoons (- 0 $spoonsToSpend)
+  var spoon (get_stat_value spoons)
+  "%{spoonsToSpend} spoon(s) used. %{spoon} spoons remaining for the day."
+  run spend_time
+
+spend_time:
+  add hygiene -5
+  add hunger -10
+  add social -10
+  add mood -10
+  run update_mood
+  clear_dialog
+  jump save_point
+
+save_point:
+  wait 100
+
+update_mood:
+  var veryLowCount 0
+  set hygiene (clamp 0 100 $hygiene)
+  set data.hygieneSprite.y (run calculate_meter_y $hygiene)
+  set mood (clamp 0 100 $mood)
+  set data.moodSprite.y (run calculate_meter_y $mood)
+  set hunger (clamp 0 100 $hunger)
+  set data.hungerSprite.y (run calculate_meter_y $hunger)
+  set social (clamp 0 100 $social)
+  set data.socialSprite.y (run calculate_meter_y $social)
+  set player.state neutral
+  if (<= $hygiene 20):
+    set player.state sad
+  if (<= $mood 20):
+    set player.state sad
+  if (<= $hunger 20):
+    set player.state sad
+  if (<= $social 20):
+    set player.state sad
+  if (<= $hygiene 10):
+    add veryLowCount 1
+  if (<= $mood 10):
+    add veryLowCount 1
+  if (<= $hunger 10):
+    add veryLowCount 1
+  if (<= $social 10):
+    add veryLowCount 1
+  var total (+ $hygiene $mood $hunger $social)
+  if (< $total 130):
+    set player.state sad
+  else:
+    if (> $total 260):
+      set player.state happy
+    else:
+      set player.state neutral
+  if (== $player.state sad):
+    set player.sprite.image img/sprites/player_sad.webp
+  if (== $player.state happy):
+    set player.sprite.image img/sprites/player_happy.webp
+  if (== $player.state neutral):
+    set player.sprite.image img/sprites/player_neutral.webp
+  var dead false
+  if (<= $total 70):
+    set dead true
+  if (> $veryLowCount 2):
+    set dead true
+  if (== $dead true):
+    jump game_over
+  if (< (get_stat_value spoons) 0):
+    jump cant_act
+  if (> (get_stat_value day) $DAYS_TO_WIN):
+    jump game_success
+
+mood_dead:
+  "%{player.name} is in a very poor shape and can't go on like this anymore."
+  jump game_over
+
+game_over:
+  "%{player.name} feels horrible. Their mood is in a poor state and they can't go on like this."
+  "%{player.name} won't survive this life."
+  jump game_end
+
+game_success:
+  "This life is a success! %{player.name} has been fine for %{DAYS_TO_WIN} days now. We can probably let them keep going on their own."
+  "Will the next life go as well?"
+  jump game_end
+
+game_end:
+  clear_dialog
+  if (== $data.playthroughs 0):
+    "%{player.name} had a lot of health issues that limited their daily energy."
+    "The amount of spoons a person has isn't always the same. Some people are lucky and have a lot of spoons every day, and some have less."
+    "However, a new life can start."
+  if (== $data.playthroughs 1):
+    "%{player.name} was blessed with good health and a lot of energy, allowing them to get a lot more out of their day."
+  choice:
+    "Start next life?":
+    "Yes":
+      clear_dialog
+      if (== $data.playthroughs 0):
+        set difficulty EASY
+      if (== $data.playthroughs 1):
+        set difficulty NORMAL
+        set wealth RICH
+      if (== $data.playthroughs 2):
+        set difficulty EASY
+        set wealth RICH
+      if (== $data.playthroughs 3):
+        "At this point, you're free to choose any difficulty combination yourself and keep playing new lives for fun."
+      if (>= $data.playthroughs 3):
+        run choose_difficulty
+      add data.playthroughs 1
+      jump start_game
+    "No":
+      "Game Over"
+
+choose_difficulty:
+  choice:
+    "Choose spoons difficulty":
+    "Easy (8 spoons)":
+      set difficulty EASY
+    "Normal (6 spoons)":
+      set difficulty NORMAL
+    "Hard (4 spoons)":
+      set difficulty HARD
+  choice:
+    "Choose wealth":
+    "Poor (low starting money, low salary)":
+      set wealth POOR
+    "Wealthy (Higher starting money, high salary)":
+      set wealth RICH
+
+sleepButton:
+  set player.sprite.x $BED_X
+  set player.sprite.y $BED_Y
+  "%{player.name} goes to sleep, it is the end of the day."
+  clear_dialog
+  jump end_day
+
+playGame:
+  set data.pcSprite.image img/sprites/game.webp
+  set player.sprite.x $PC_X
+  set player.sprite.y $PC_Y
+  "%{player.name} plays a game for a little while"
+  add mood 35
+  add hunger -5
+  add hygiene -5
+  add social -10
+  run update_mood
+  run spend_spoon 1
+
+cook:
+  if (<= $fridge_meals 0):
+    "The fridge is empty, there's no food to cook."
+    choice:
+      "Buy groceries?":
+      "Yes (1 spoon, %{GROCERIES_COST} money)":
+        jump buy_groceries
+      "No":
+        "%{player.name} gives up on cooking as the fridge is empty."
+  else:
+    add fridge_meals -1
+    set player.sprite.x $DEFAULT_X
+    set player.sprite.y $DEFAULT_Y
+    "%{player.name} takes the time to cook a meal for themselves."
+    set hunger 100
+    add social -10
+    add hygiene -20
+    add mood 10
+    run spend_spoon 1
+
+buy_groceries:
+  if (<= $data.money $GROCERIES_COST):
+    "%{player.name} doesn't have enough money to buy groceries."
+    clear_dialog
+  else:
+    add data.money (- 0 50)
+    add fridge_meals $GROCERIES_MEALS
+    "%{player.name} buys enough groceries for %{GROCERIES_MEALS} days."
+    "There is now %{fridge_meals} meals in the fridge."
+    clear_dialog
+    run spend_spoon 1
+
+useSmartphone:
+  clear_dialog
+  "%{player.name} picks up their phone."
+  choice:
+    "Choose an activity":
+    "Order takeout (100 money)" if (>= (get_stat_value money) 100):
+      jump takeout
+    "Organise something with friends (2 spoons)" if (> (get_stat_value spoons) 1):
+      jump socialEvent
+    "Buy vodka (50 money)" if (>= (get_stat_value money) 50):
+      jump buyVodka
+    "Cancel":
+      "%{player.name} puts their phone back down"
+      clear_dialog
+
+buyVodka:
+  add_item vodka 1
+  "%{player.name} orders some vodka. It switfly gets delivered."
+
+use_vodka:
+  "%{player.name} drinks some vodka. It makes them feel drunk, but they feel better."
+  set mood 80
+  add_item vodka -1
+  add hunger -10
+  add alcoholDrank 1
+  add alcoholToday 1
+  jump update_mood
+
+takeout:
+  clear_dialog
+  set player.sprite.x $DEFAULT_X
+  set player.sprite.y $DEFAULT_Y
+  "%{player.name} orders takeout to avoid having to cook."
+  set hunger 100
+  add_stat money -100
+  add mood 20
+  jump spend_time
+
+work:
+  clear_dialog
+  if (< (get_stat_value spoons) 2):
+    "Going to work costs 2 spoons. You don't have enough spoons to work anymore."
+    jump spend_time
+  else:
+    if $data.workedToday:
+      "%{player.name} already went to work today."
+      jump save_point
+    else:
+      if $fired:
+        "%{player.name} is fired and can't go to work."
+      else:
+        set data.workedToday true
+        set player.sprite.x $AWAY_X
+        set player.sprite.y $AWAY_Y
+        "%{player.name} goes to work. It is tiring but rent has to be paid."
+        clear_dialog
+        wait 500
+        "Back from work!"
+        "%{player.name}'s daily salary is %{salary}"
+        add_stat money $salary
+        set player.sprite.x $DEFAULT_X
+        set player.sprite.y $DEFAULT_Y
+        if (<= $hygiene 30):
+          "%{player.name} was stinky at work and felt embarassed."
+          add social -40
+          add mood -20
+        if (<= $hunger 20):
+          "%{player.name} was hangry at work and ended up yelling at a coworker."
+          add social -20
+        add social 20
+        add hunger -40
+        add mood -40
+        add hygiene -40
+        if (|| (> $alcoholDrank 3) (> $alcoholToday 1)):
+          "%{player.name}'s coworkers noticed they were drunk at work from all the vodka they've been drinking."
+          "%{player.name} has been fired."   
+        run spend_spoon 2
+  
+walk:
+  clear_dialog
+  set player.sprite.x $AWAY_X
+  set player.sprite.y $AWAY_Y
+  "%{player.name} goes for a walk to stretch their legs"
+  wait 500
+  "Back from the walk!"
+  set player.sprite.x $DEFAULT_X
+  set player.sprite.y $DEFAULT_Y
+  add social 10
+  add mood 40
+  add hunger -15
+  add hygiene -10
+  run spend_spoon 1
+
+shower:
+  set player.sprite.x $AWAY_X
+  set player.sprite.y $AWAY_Y
+  "%{player.name} takes a shower and feel refreshed."
+  set player.sprite.x $DEFAULT_X
+  set player.sprite.y $DEFAULT_Y
+  add hygiene 100
+  run spend_spoon 1
+
+gym:
+  if (< (get_stat_value spoons) 2):
+    "Going to the gym costs 2 spoons. You don't have enough spoons to go."
+    jump spend_time
+  else:
+    set player.sprite.x $AWAY_X
+    set player.sprite.y $AWAY_X
+    "%{player.name} goes to the gym to exercise."
+    "Maybe if %{player.name} keeps doing it every day for the rest of their life they'll live a little longer."
+    set player.sprite.x $DEFAULT_X
+    set player.sprite.y $DEFAULT_Y
+    add hunger -30
+    add mood 30
+    add hygiene -50
+    add social 20
+    run spend_spoon 2
+
+chatFriends:
+  set player.sprite.x $PC_X
+  set player.sprite.y $PC_Y
+  "%{player.name} chats with their friends online."
+  add social 30
+  add hunger -5
+  add mood 10
+  add hygiene -5
+  run spend_spoon 1
+
+socialEvent:
+  "%{player.name} organises a fun day with some friends."
+  set player.sprite.x $AWAY_X
+  set player.sprite.y $AWAY_Y
+  "It was pretty tiring but it put them in a good mood."
+  set player.sprite.x $DEFAULT_X
+  set player.sprite.y $DEFAULT_Y
+  add hunger -10
+  add mood 60
+  add hygiene -10
+  add social 80
+  run spend_spoon 2
