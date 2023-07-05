@@ -1,0 +1,26 @@
+main:
+  "Hello world"
+  set_screen game 0 slide-top 1000
+  jump choice_demo
+
+choice_demo:
+  var choiceText (create_object 300 200)
+  set choiceText.text "Stop!"
+  set choiceText.onClick "clicked_object Stop!"
+  set choiceText.cssClass "choice-sprite-appear"
+  set choiceText.width 200
+  set choiceText.height 80
+  set choiceText.clickMethod jump
+  set choiceText.scriptClickable true
+  wait 10
+  set choiceText.x 500
+  set choiceText.cssClass "choice-sprite"
+  talk player idle "Hello, this is dialogue that is meant to be interrupted by the button above. You can interrupt during the long dialogue coming next."
+  talk player idle "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla facilisi. Sed euismod, nisl eget aliquam lacinia, nunc nisl aliquet nunc, nec aliquam nisl nunc eget nisl. Nulla facilisi. Sed euismod, nisl eget aliquam lacinia, nunc nisl aliquet nunc, nec aliquam nisl nunc eget nisl. Nulla facilisi. Sed euismod, nisl eget aliquam lacinia, nunc nisl aliquet nunc, nec aliquam nisl nunc eget nisl. Nulla facilisi. Sed euismod, nisl eget aliquam lacinia, nunc nisl aliquet nunc, nec aliquam nisl nunc eget nisl. Nulla facilisi. Sed euismod, nisl eget aliquam lacinia, nunc nisl aliquet nunc, nec aliquam nisl nunc eget nisl. Nulla facilisi. Sed euismod, nisl eget aliquam lacinia, nunc nisl aliquet nunc, nec aliquam nisl nunc eget nisl. Nulla facilisi. Sed euismod, nisl eget aliquam lacinia, nunc nisl aliquet nunc, nec aliquam nisl nunc eget nisl. Nulla facilisi. Sed euismod, nisl eget aliquam lacinia, nunc nisl aliquet nunc, nec aliquam nisl nunc eget nisl."
+  // wait 500
+  delete_sprite $choiceText
+
+clicked_object choice:
+  empty_sprites
+  clear_dialog
+  talk player idle "%{$choice}"
