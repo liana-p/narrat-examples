@@ -1,0 +1,29 @@
+main:
+  "Hello world"
+  set_screen game 0 slide-top 1000
+  set data.test_array (new Array "a" "b" "c" "d" "e" "f" "g" "h" "i" "j")
+  jump test_for_loop
+
+test_for_loop:
+  run for 0 $data.test_array print_array_element
+  "The loop has ended!"
+
+print_array_element index element:
+  "We're at index %{$index} and the content is %{$element}"
+  if (== $index 4):
+    // Exit the for loop early
+    return "break"
+
+// Utility for loop function
+// @param {number} index: The index to start the loop at
+// @param {array} array: The array to loop through
+// @param {function} callback: The name of a label to run on every element. It will be called with the current index and array elements as arguments
+for index array callback:
+  if (< $index $array.length):
+    var result (run $callback $index $array[$index])
+    if (== $result "break"):
+      return "break"
+    run for (+ $index 1) $array $callback
+  else:
+    return true
+
