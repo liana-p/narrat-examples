@@ -1,3 +1,13 @@
+# Text only narrat example game
+
+This is a Narrat example game focused on text, with the text at the center appearing on top of the background.
+
+You can still have backgrounds in this game of course, but it's an example of a layout that could fit a text-only game, or one where the text is the main focus.
+
+Look at the dialogue panel config and the main.css file to see how it's done.
+
+![Screenshot](./screenshot.png)
+
 # Narrat Template
 
 Template app for [Narrat](https://github.com/nialna/narrat).
