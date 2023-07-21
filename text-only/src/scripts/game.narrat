@@ -1,0 +1,6 @@
+main:
+  "This game has text centered in the middle of the screen"
+  "It has a background behind it, and you can change the image like any other narrat screen if you want"
+  "The goal of this template is to have a game focused on the text where the background images aren't as important (or could even be removed)"
+  "Look at the css file to customise how this game looks"
+  "The dialog will now end and the dialogue panel will close. Up to you to write the rest of your game."
